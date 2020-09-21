@@ -1,0 +1,34 @@
+{
+	"Command Snippet": {
+		"scope": "javascript,typescript",
+		"prefix": "cmd",
+		"body": [
+			"const { Command } = require('discord.js-commando');",
+			"",
+			"module.exports = class ${1:Name}Command extends Command {",
+			"\tconstructor(client) {",
+			"\t\tsuper(client, {",
+			"\t\t\tname: '${2:name}',",
+			"\t\t\taliases: ['${3:alias}'],",
+			"\t\t\tgroup: '${4:group}',",
+			"\t\t\tmemberName: '${2:name}',",
+			"\t\t\tdescription: '${5:Command Description}',",
+			"\t\t\targs: [",
+			"\t\t\t\t{",
+			"\t\t\t\t\tkey: '${6:argName}',",
+			"\t\t\t\t\tprompt: '${7:argPrompt}',",
+			"\t\t\t\t\ttype: '${8:argType}',",
+			"\t\t\t\t},",
+			"\t\t\t],",
+			"\t\t\tguildOnly: ${9|true,false|},",
+			"\t\t});",
+			"\t}",
+			"",
+			"\trun(message, { ${6:argName} }) {",
+			"\t\treturn;",
+			"\t}",
+			"};"
+		],
+		"description": "Creates a new command"
+	}
+}
