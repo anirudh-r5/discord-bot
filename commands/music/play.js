@@ -15,6 +15,7 @@ module.exports = class PlayCommand extends Command {
 					key: 'query',
 					prompt: 'Enter song to play',
 					type: 'string',
+					default: '',
 				},
 			],
 			guildOnly: true,
@@ -22,18 +23,33 @@ module.exports = class PlayCommand extends Command {
 	}
 
 	async run(message, { query }) {
-		const channel = message.member.voice.channel;
-		if (!channel) {
-			return message.say('Join a voice channel first!');
+		if (!query && message.guild.musicData.isPaused) {
+			message.guild.musicData.musicDispatcher.resume();
+			message.guild.musicData.isPaused = false;
+			return message.say('Playback resumed!');
 		}
-		try {
-			const music = await ytsr(query, { limit: 1 });
-			PlayCommand.playMusic(music, message);
+		else if (!query && !message.guild.musicData.isPaused) {
+			return message.say('Enter a song to be played');
 		}
-		catch (error) {
-			console.error(error);
+		else if (query) {
+			const channel = message.member.voice.channel;
+			if(message.guild.musicData.isPaused) {
+				message.guild.musicData.musicDispatcher.resume();
+				message.guild.musicData.isPaused = false;
+				message.say('Queuing up your song & resuming playback!');
+			}
+			else if (!channel) {
+				return message.say('Join a voice channel first!');
+			}
+			try {
+				const music = await ytsr(query, { limit: 1 });
+				PlayCommand.playMusic(music, message);
+			}
+			catch (error) {
+				console.error(error);
+			}
+			return;
 		}
-		return;
 	}
 
 	static async playMusic(music, message) {
@@ -70,6 +86,7 @@ module.exports = class PlayCommand extends Command {
 			player.on('start', () => {
 				message.say('Started playing');
 				message.guild.musicData.isPlaying = true;
+				message.guild.musicData.isPaused = false;
 				message.guild.musicData.channel = message.member.voice.channel;
 				message.guild.musicData.musicDispatcher = player;
 				message.guild.musicData.nowPlaying = now;
@@ -81,6 +98,10 @@ module.exports = class PlayCommand extends Command {
 					PlayCommand.playMusic(next, message);
 				}
 				else {
+					message.guild.musicData.isPlaying = false;
+					message.guild.musicData.nowPlaying = null;
+					message.guild.musicData.musicDispatcher = null;
+					message.guild.musicData.channel = null;
 					return message.say('Queue empty. Stopped playing');
 				}
 			});

@@ -25,7 +25,7 @@
 			"\t}",
 			"",
 			"\trun(message, { ${6:argName} }) {",
-			"\t\treturn;",
+			"\t\treturn message.say('${10:Command executed!}');",
 			"\t}",
 			"};"
 		],

@@ -12,6 +12,7 @@ Structures.extend('Guild', Guild => {
 				queue: [],
 				nowPlaying: null,
 				isPlaying: false,
+				isPaused: false,
 				volume: 1,
 				musicDispatcher: null,
 				channel: null,
@@ -36,7 +37,6 @@ client.registry
 	])
 	.registerDefaultGroups()
 	.registerDefaultCommands({
-		help: false,
 	})
 	.registerCommandsIn(path.join(__dirname, 'commands'));
 
