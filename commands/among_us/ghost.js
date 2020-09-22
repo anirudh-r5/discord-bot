@@ -24,7 +24,6 @@ module.exports = class GhostCommand extends Command {
 		else {
 			try {
 				await player.voice.setMute(true);
-				console.log(`${player} muted`);
 				const ghosts = message.guild.roles.cache.find(role => role.name == 'ghosts');
 				await player.roles.add(ghosts);
 				await message.say(`Player: ${player} was muted`);

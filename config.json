@@ -1,5 +1,27 @@
 {
-    "prefix" : "?",
-    "defaultCooldown" : 3,
-    "ownerID" : "312921895114768386"
+    "prefix": "?",
+    "defaultCooldown": 3,
+    "ownerID": "312921895114768386",
+    "music": {
+        "botName": "Testy",
+        "successColor": "#00ff00",
+        "failureColor": "ff0000",
+        "playResumeTitle": "Playback Resumed!",
+        "playResumeQueueTitle": "Queuing up your song & resuming playback!",
+        "playResumeQueueFooter": "If you wanted to only queue a song and not resume playback, use the `!queue` command",
+        "playNoVoiceChannelTitle": "You aren't connected to a voice channel!",
+        "playNoVoiceChannelDesc": "Join any voice channel & try again to start playing music",
+        "playNoQueryTitle": "No music entered!",
+        "playNoQueryDesc": "Enter a song name/url from YouTube to start playing",
+        "playNowPlayingTitle": "Now Playing!",
+        "playMusicQueuedTitle": "Music Queued!",
+        "playQueueFinishedTitle": "Queue empty!",
+        "playQueueFinishedDesc": "No more songs left to play",
+        "stopPlayingTitle": "Music playback fully stopped",
+        "stopPlayingDesc": "Stopped playback & disconnected from the voice channel",
+        "stopNotPlayingTitle": "No music playing",
+        "stopNotPlayingDesc": "To start playing something, use the `!play` command",
+        "pausePauseTitle": "Playback Paused!",
+        "pauseResumeTitle": "Playback Resumed!"
+    }
 }

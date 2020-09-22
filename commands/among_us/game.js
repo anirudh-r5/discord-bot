@@ -18,7 +18,6 @@ module.exports = class GameCommand extends Command {
 			if(!player.voice.serverMute) {
 				try {
 					await player.voice.setMute(true);
-					console.log(`${player} muted`);
 				}
 				catch (error) {
 					console.error;
@@ -27,7 +26,6 @@ module.exports = class GameCommand extends Command {
 			else {
 				try {
 					await player.voice.setMute(false);
-					console.log(`${player} unmuted`);
 				}
 				catch (error) {
 					console.error;

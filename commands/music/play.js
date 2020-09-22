@@ -1,4 +1,6 @@
 const { Command } = require('discord.js-commando');
+const { MessageEmbed } = require('discord.js');
+const { music: EmbedData } = require('../../config.json');
 const ytdl = require('ytdl-core');
 const ytsr = require('ytsr');
 
@@ -24,22 +26,46 @@ module.exports = class PlayCommand extends Command {
 
 	async run(message, { query }) {
 		if (!query && message.guild.musicData.isPaused) {
+			const minsPlayed = Math.floor(message.guild.musicData.musicDispatcher.streamTime / 60000);
+			const secsPlayed = ((message.guild.musicData.musicDispatcher.streamTime % 60000) / 1000).toFixed(0);
+			const timePlayed = `${minsPlayed}:${secsPlayed < 10 ? '0' : ''}${secsPlayed}`;
+			const embed = new MessageEmbed()
+				.setAuthor(EmbedData.botName, this.client.user.avatarURL('png'))
+				.setTitle(EmbedData.playResumeTitle)
+				.setDescription(message.guild.musicData.nowPlaying.title)
+				.setFooter(`Duration ${timePlayed}/${message.guild.musicData.nowPlaying.duration}`)
+				.setColor(EmbedData.successColor);
 			message.guild.musicData.musicDispatcher.resume();
 			message.guild.musicData.isPaused = false;
-			return message.say('Playback resumed!');
+			return message.say(embed);
 		}
 		else if (!query && !message.guild.musicData.isPaused) {
-			return message.say('Enter a song to be played');
+			const embed = new MessageEmbed()
+				.setAuthor(EmbedData.botName, this.client.user.avatarURL('png'))
+				.setTitle(EmbedData.playNoQueryTitle)
+				.setDescription(EmbedData.playNoQueryDesc)
+				.setColor(EmbedData.failureColor);
+			return message.say(embed);
 		}
 		else if (query) {
 			const channel = message.member.voice.channel;
-			if(message.guild.musicData.isPaused) {
+			if (message.guild.musicData.isPaused) {
 				message.guild.musicData.musicDispatcher.resume();
 				message.guild.musicData.isPaused = false;
-				message.say('Queuing up your song & resuming playback!');
+				const embed = new MessageEmbed()
+					.setAuthor(EmbedData.botName, this.client.user.avatarURL('png'))
+					.setTitle(EmbedData.playResumeQueueTitle)
+					.setFooter(EmbedData.playResumeQueueFooter)
+					.setColor(EmbedData.successColor);
+				message.say(embed);
 			}
 			else if (!channel) {
-				return message.say('Join a voice channel first!');
+				const embed = new MessageEmbed()
+					.setAuthor(EmbedData.botName, this.client.user.avatarURL('png'))
+					.setTitle(EmbedData.playNoVoiceChannelTitle)
+					.setDescription(EmbedData.playNoVoiceChannelDesc)
+					.setColor(EmbedData.failureColor);
+				return message.say(embed);
 			}
 			try {
 				const music = await ytsr(query, { limit: 1 });
@@ -55,6 +81,7 @@ module.exports = class PlayCommand extends Command {
 	static async playMusic(music, message) {
 		let stream = null;
 		let now = null;
+		const client = message.client;
 		if (!message.guild.musicData.isPlaying) {
 			if (message.guild.musicData.queue.length == 0) {
 				stream = ytdl(music.items[0].link, {
@@ -72,7 +99,15 @@ module.exports = class PlayCommand extends Command {
 		}
 		else if (music.items) {
 			message.guild.musicData.queue.push(music.items[0]);
-			return message.say('Music queued');
+			const embed = new MessageEmbed()
+				.setAuthor(EmbedData.botName, client.user.avatarURL('png'))
+				.setTitle(EmbedData.playMusicQueued)
+				.setDescription(music.items[0].title)
+				.setURL(music.items[0].link)
+				.setThumbnail(music.items[0].thumbnail)
+				.setFooter(`Track No.: ${message.guild.musicData.queue.length + 1}`)
+				.setColor(EmbedData.successColor);
+			return message.say(embed);
 		}
 		else {
 			stream = ytdl(music.link, {
@@ -84,7 +119,16 @@ module.exports = class PlayCommand extends Command {
 			const conn = await message.member.voice.channel.join();
 			const player = conn.play(stream);
 			player.on('start', () => {
-				message.say('Started playing');
+				const embed = new MessageEmbed()
+					.setAuthor(EmbedData.botName, client.user.avatarURL('png'))
+					.setTitle(EmbedData.playNowPlayingTitle)
+					.setDescription(now.title)
+					.setURL(now.link)
+					.setThumbnail(now.thumbnail)
+					.addField('By:', now.author.name, true)
+					.setFooter(`Duration: ${now.duration}\tViews: ${now.views}`)
+					.setColor(EmbedData.successColor);
+				message.say(embed);
 				message.guild.musicData.isPlaying = true;
 				message.guild.musicData.isPaused = false;
 				message.guild.musicData.channel = message.member.voice.channel;
@@ -98,11 +142,17 @@ module.exports = class PlayCommand extends Command {
 					PlayCommand.playMusic(next, message);
 				}
 				else {
+					message.guild.musicData.channel.leave();
 					message.guild.musicData.isPlaying = false;
 					message.guild.musicData.nowPlaying = null;
 					message.guild.musicData.musicDispatcher = null;
 					message.guild.musicData.channel = null;
-					return message.say('Queue empty. Stopped playing');
+					const embed = new MessageEmbed()
+						.setAuthor(EmbedData.botName, client.user.avatarURL('png'))
+						.setTitle(EmbedData.playQueueFinishedTitle)
+						.setDescription(EmbedData.playQueueFinishedDesc)
+						.setColor(EmbedData.failureColor);
+					return message.say(embed);
 				}
 			});
 		}
