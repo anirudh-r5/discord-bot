@@ -4,7 +4,7 @@ module.exports = class ResetCommand extends Command {
 	constructor(client) {
 		super(client, {
 			name: 'reset',
-			aliases: ['r'],
+			aliases: [],
 			group: 'among_us',
 			memberName: 'reset',
 			description: 'Adds all the players back to the main channel.\nUse when starting a new game/after a game is over',

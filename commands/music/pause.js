@@ -1,6 +1,7 @@
 const { Command } = require('discord.js-commando');
 const { MessageEmbed } = require('discord.js');
 const { music: EmbedData } = require('../../config.json');
+const { check } = require('../../util/check.js');
 
 module.exports = class PauseCommand extends Command {
 	constructor(client) {
@@ -15,8 +16,21 @@ module.exports = class PauseCommand extends Command {
 	}
 
 	run(message) {
-		const minsPlayed = Math.floor(message.guild.musicData.musicDispatcher.streamTime / 60000);
-		const secsPlayed = ((message.guild.musicData.musicDispatcher.streamTime % 60000) / 1000).toFixed(0);
+		const pass = check(message, this.client);
+		if (pass != true) {
+			return message.say(pass);
+		}
+		if (!message.guild.musicData.isPlaying) {
+			const embed = new MessageEmbed()
+				.setAuthor(EmbedData.botName, this.client.user.avatarURL('png'))
+				.setTitle(EmbedData.musicNotPlayingTitle)
+				.setDescription(EmbedData.musicNotPlayingDesc)
+				.setColor(EmbedData.failureColor);
+			return message.say(embed);
+		}
+		const time = message.guild.musicData.musicDispatcher.streamTime - message.guild.musicData.musicDispatcher.pausedTime;
+		const minsPlayed = Math.floor(time / 60000);
+		const secsPlayed = ((time % 60000) / 1000).toFixed(0);
 		const timePlayed = `${minsPlayed}:${secsPlayed < 10 ? '0' : ''}${secsPlayed}`;
 		if (message.guild.musicData.isPaused) {
 			message.guild.musicData.isPaused = false;

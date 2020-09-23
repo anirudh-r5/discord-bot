@@ -10,10 +10,13 @@ Structures.extend('Guild', Guild => {
 			super(client, data);
 			this.musicData = {
 				queue: [],
-				nowPlaying: null,
+				queue2: [],
+				loopTrack: false,
+				loopQueue: false,
 				isPlaying: false,
 				isPaused: false,
 				volume: 1,
+				nowPlaying: null,
 				musicDispatcher: null,
 				channel: null,
 			};

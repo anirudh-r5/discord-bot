@@ -26,8 +26,9 @@ module.exports = class PlayCommand extends Command {
 
 	async run(message, { query }) {
 		if (!query && message.guild.musicData.isPaused) {
-			const minsPlayed = Math.floor(message.guild.musicData.musicDispatcher.streamTime / 60000);
-			const secsPlayed = ((message.guild.musicData.musicDispatcher.streamTime % 60000) / 1000).toFixed(0);
+			const time = message.guild.musicData.musicDispatcher.streamTime - message.guild.musicData.musicDispatcher.pausedTime;
+			const minsPlayed = Math.floor(time / 60000);
+			const secsPlayed = ((time % 60000) / 1000).toFixed(0);
 			const timePlayed = `${minsPlayed}:${secsPlayed < 10 ? '0' : ''}${secsPlayed}`;
 			const embed = new MessageEmbed()
 				.setAuthor(EmbedData.botName, this.client.user.avatarURL('png'))
@@ -50,20 +51,18 @@ module.exports = class PlayCommand extends Command {
 		else if (query) {
 			const channel = message.member.voice.channel;
 			if (message.guild.musicData.isPaused) {
-				message.guild.musicData.musicDispatcher.resume();
-				message.guild.musicData.isPaused = false;
 				const embed = new MessageEmbed()
 					.setAuthor(EmbedData.botName, this.client.user.avatarURL('png'))
 					.setTitle(EmbedData.playResumeQueueTitle)
-					.setFooter(EmbedData.playResumeQueueFooter)
+					.setDescription(EmbedData.playResumeQueueDesc)
 					.setColor(EmbedData.successColor);
 				message.say(embed);
 			}
 			else if (!channel) {
 				const embed = new MessageEmbed()
 					.setAuthor(EmbedData.botName, this.client.user.avatarURL('png'))
-					.setTitle(EmbedData.playNoVoiceChannelTitle)
-					.setDescription(EmbedData.playNoVoiceChannelDesc)
+					.setTitle(EmbedData.musicNoVoiceChannelTitle)
+					.setDescription(EmbedData.musicNoVoiceChannelDesc)
 					.setColor(EmbedData.failureColor);
 				return message.say(embed);
 			}
@@ -88,6 +87,7 @@ module.exports = class PlayCommand extends Command {
 					filter: 'audioonly',
 				});
 				now = music.items[0];
+				message.guild.musicData.queue2.push(now);
 			}
 			else if (message.guild.musicData.queue.length > 0) {
 				stream = ytdl(message.guild.musicData.queue[0].link, {
@@ -99,13 +99,14 @@ module.exports = class PlayCommand extends Command {
 		}
 		else if (music.items) {
 			message.guild.musicData.queue.push(music.items[0]);
+			message.guild.musicData.queue2.push(music.items[0]);
 			const embed = new MessageEmbed()
 				.setAuthor(EmbedData.botName, client.user.avatarURL('png'))
-				.setTitle(EmbedData.playMusicQueued)
+				.setTitle(EmbedData.playMusicQueuedTitle)
 				.setDescription(music.items[0].title)
 				.setURL(music.items[0].link)
 				.setThumbnail(music.items[0].thumbnail)
-				.setFooter(`Track No.: ${message.guild.musicData.queue.length + 1}`)
+				.setFooter(`Track No.: ${message.guild.musicData.queue.length}`)
 				.setColor(EmbedData.successColor);
 			return message.say(embed);
 		}
@@ -136,9 +137,30 @@ module.exports = class PlayCommand extends Command {
 				message.guild.musicData.nowPlaying = now;
 			});
 			player.on('finish', () => {
-				if (message.guild.musicData.queue.length > 0) {
+				if (message.guild.musicData.loopTrack) {
+					const embed = new MessageEmbed()
+						.setAuthor(EmbedData.botName, client.user.avatarURL('png'))
+						.setTitle(EmbedData.playRepeatTrackTitle)
+						.setDescription(EmbedData.playRepeatQueueDesc)
+						.setColor(EmbedData.successColor);
+					message.say(embed);
+					PlayCommand.playMusic(message.guild.musicData.nowPlaying, message);
+				}
+				else if (message.guild.musicData.queue.length > 0) {
 					const next = message.guild.musicData.queue[0];
 					message.guild.musicData.queue.shift();
+					PlayCommand.playMusic(next, message);
+				}
+				else if (message.guild.musicData.queue.length == 0 && message.guild.musicData.loopQueue) {
+					message.guild.musicData.queue = message.guild.musicData.queue2.slice();
+					const next = message.guild.musicData.queue[0];
+					message.guild.musicData.queue.shift();
+					const embed = new MessageEmbed()
+						.setAuthor(EmbedData.botName, client.user.avatarURL('png'))
+						.setTitle(EmbedData.playRepeatQueueTitle)
+						.setDescription(EmbedData.playRepeatQueueDesc)
+						.setColor(EmbedData.successColor);
+					message.say(embed);
 					PlayCommand.playMusic(next, message);
 				}
 				else {
@@ -147,6 +169,9 @@ module.exports = class PlayCommand extends Command {
 					message.guild.musicData.nowPlaying = null;
 					message.guild.musicData.musicDispatcher = null;
 					message.guild.musicData.channel = null;
+					message.guild.musicData.loopTrack = false;
+					message.guild.musicData.loopQueue = false;
+					message.guild.musicData.queue2 = [];
 					const embed = new MessageEmbed()
 						.setAuthor(EmbedData.botName, client.user.avatarURL('png'))
 						.setTitle(EmbedData.playQueueFinishedTitle)
